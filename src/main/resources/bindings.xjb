@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bindings xmlns="https://jakarta.ee/xml/ns/jaxb"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:xs="http://www.w3.org/2001/XMLSchema"
+          xsi:schemaLocation="https://jakarta.ee/xml/ns/jaxb https://jakarta.ee/xml/ns/jaxb/bindingschema_3_0.xsd"
+          version="3.0">
+    
+    <!-- Global configuration -->
+    <globalBindings>
+        <serializable uid="1"/>
+    </globalBindings>
+    
+    <!-- Binding for ISDOC invoice schema -->
+    <bindings schemaLocation="xsd/isdoc-invoice-6.0.2.xsd">
+        
+        <!-- Rename the IdAttribute attribute group -->
+        <bindings node="//xs:attributeGroup[@name='IdAttribute']/xs:attribute[@name='id']">
+            <property name="idAttribute"/>
+        </bindings>
+        
+    </bindings>
+    
+</bindings>

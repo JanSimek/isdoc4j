@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jaxb:bindings xmlns:jaxb="https://jakarta.ee/xml/ns/jaxb"
+               xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc"
+               xmlns:xs="http://www.w3.org/2001/XMLSchema"
+               jaxb:version="3.0">
+
+    <!-- Binding for ISDOC invoice schema -->
+    <jaxb:bindings schemaLocation="isdoc-invoice-6.0.2.xsd">
+        
+        <!-- Global configuration -->
+        <jaxb:globalBindings>
+            <jaxb:serializable uid="1"/>
+            <jaxb:javaType name="java.time.LocalDate" xmlType="xs:date"
+                          parseMethod="java.time.LocalDate.parse"
+                          printMethod="java.lang.String.valueOf"/>
+            <jaxb:javaType name="java.time.LocalDateTime" xmlType="xs:dateTime"
+                          parseMethod="java.time.LocalDateTime.parse"
+                          printMethod="java.lang.String.valueOf"/>
+        </jaxb:globalBindings>
+        
+        <!-- Resolve naming conflicts between 'id' attribute and 'ID' element -->
+        <!-- Rename all 'id' attributes to 'idAttribute' to avoid conflicts -->
+        <jaxb:bindings node="//xs:attribute[@name='id']">
+            <jaxb:property name="idAttribute"/>
+        </jaxb:bindings>
+        
+        <!-- Package-wide settings -->
+        <jaxb:schemaBindings>
+            <jaxb:package name="cz.isdoc.schema.invoice.v602"/>
+        </jaxb:schemaBindings>
+        
+    </jaxb:bindings>
+    
+</jaxb:bindings>
