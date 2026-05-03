@@ -105,11 +105,11 @@ Unmarshaller unmarshaller = context.createUnmarshaller();
 // From file
 Invoice invoice = (Invoice) unmarshaller.unmarshal(new File("invoice.xml"));
 
-// From ZIP stream (typical ISDOC format)
-try (ZipInputStream zis = new ZipInputStream(new FileInputStream("invoice.isdoc"))) {
+// From ISDOCX archive (ZIP format)
+try (ZipInputStream zis = new ZipInputStream(new FileInputStream("invoice-2024-001.isdocx"))) {
     ZipEntry entry;
     while ((entry = zis.getNextEntry()) != null) {
-        if ("Invoice.xml".equals(entry.getName())) {
+        if (entry.getName().endsWith(".isdoc")) {
             Invoice invoice = (Invoice) unmarshaller.unmarshal(zis);
             break;
         }
@@ -254,14 +254,14 @@ public void createIsdocFile(Invoice invoice, Path outputPath) throws IOException
     // Create ZIP with manifest and invoice XML
     try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(outputPath))) {
         
-        // Add manifest
-        zos.putNextEntry(new ZipEntry("META-INF/manifest.xml"));
-        String manifest = createManifest();
+        // Add ISDOC manifest (root level, not META-INF)
+        zos.putNextEntry(new ZipEntry("manifest.xml"));
+        String manifest = createManifest("invoice-2024-001.isdoc");
         zos.write(manifest.getBytes(StandardCharsets.UTF_8));
         zos.closeEntry();
         
-        // Add invoice XML
-        zos.putNextEntry(new ZipEntry("Invoice.xml"));
+        // Add main ISDOC document
+        zos.putNextEntry(new ZipEntry("invoice-2024-001.isdoc"));
         JAXBContext context = JAXBContext.newInstance(Invoice.class);
         Marshaller marshaller = context.createMarshaller();
         marshaller.marshal(invoice, zos);
@@ -269,14 +269,13 @@ public void createIsdocFile(Invoice invoice, Path outputPath) throws IOException
     }
 }
 
-private String createManifest() {
+private String createManifest(String filename) {
     return """
         <?xml version="1.0" encoding="UTF-8"?>
-        <manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0">
-            <manifest:file-entry manifest:full-path="/" manifest:media-type="application/isdoc"/>
-            <manifest:file-entry manifest:full-path="Invoice.xml" manifest:media-type="text/xml"/>
-        </manifest:manifest>
-        """;
+        <manifest xmlns="http://isdoc.cz/namespace/2013/manifest">
+            <maindocument filename="%s"/>
+        </manifest>
+        """.formatted(filename);
 }
 ```
 
