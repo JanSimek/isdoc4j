@@ -190,21 +190,9 @@
                 </executions>
             </plugin>
 
-            <!-- Maven GPG Plugin - Required for Maven Central signing -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-                <version>3.1.0</version>
-                <executions>
-                    <execution>
-                        <id>sign-artifacts</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>sign</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+            <!-- Maven GPG Plugin lives in the `release` profile only. Binding it here
+                 too made every `mvn install` require a GPG secret key, which fails in
+                 any clean environment (CI, Docker build). Sign with -P release. -->
 
             <!-- Nexus Staging Plugin - For Maven Central deployment -->
             <plugin>
