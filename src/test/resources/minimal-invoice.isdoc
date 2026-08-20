@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  A minimal ISDOC 6.0.2 invoice carrying every element the schema marks required
+  and nothing else. Entirely fictional: the parties, identifiers and amounts do
+  not correspond to any real company or transaction.
+
+  Kept as a literal document rather than built through the JAXB API on purpose:
+  it is the fixed point the packaging tests measure against, so it must not shift
+  when the generated classes do.
+-->
+<Invoice xmlns="http://isdoc.cz/namespace/2013" version="6.0.2">
+    <DocumentType>1</DocumentType>
+    <ID>2026-0001</ID>
+    <UUID>00000000-0000-4000-8000-000000000001</UUID>
+    <IssueDate>2026-01-31</IssueDate>
+    <VATApplicable>false</VATApplicable>
+    <ElectronicPossibilityAgreementReference></ElectronicPossibilityAgreementReference>
+    <LocalCurrencyCode>CZK</LocalCurrencyCode>
+    <CurrRate>1</CurrRate>
+    <RefCurrRate>1</RefCurrRate>
+    <AccountingSupplierParty>
+        <Party>
+            <PartyIdentification>
+                <ID>12345678</ID>
+            </PartyIdentification>
+            <PartyName>
+                <Name>Example Supplier s.r.o.</Name>
+            </PartyName>
+            <PostalAddress>
+                <StreetName>Ulice</StreetName>
+                <BuildingNumber>1</BuildingNumber>
+                <CityName>Praha</CityName>
+                <PostalZone>110 00</PostalZone>
+                <Country>
+                    <IdentificationCode>CZ</IdentificationCode>
+                    <Name>Czechia</Name>
+                </Country>
+            </PostalAddress>
+        </Party>
+    </AccountingSupplierParty>
+    <AccountingCustomerParty>
+        <Party>
+            <PartyIdentification>
+                <ID>87654321</ID>
+            </PartyIdentification>
+            <PartyName>
+                <Name>Example Customer a.s.</Name>
+            </PartyName>
+            <PostalAddress>
+                <StreetName>Namesti</StreetName>
+                <BuildingNumber>2</BuildingNumber>
+                <CityName>Brno</CityName>
+                <PostalZone>602 00</PostalZone>
+                <Country>
+                    <IdentificationCode>CZ</IdentificationCode>
+                    <Name>Czechia</Name>
+                </Country>
+            </PostalAddress>
+        </Party>
+    </AccountingCustomerParty>
+    <InvoiceLines>
+        <InvoiceLine>
+            <ID>1</ID>
+            <InvoicedQuantity unitCode="hrs">1.000000</InvoicedQuantity>
+            <LineExtensionAmount>100.00</LineExtensionAmount>
+            <LineExtensionAmountTaxInclusive>100.00</LineExtensionAmountTaxInclusive>
+            <LineExtensionTaxAmount>0.00</LineExtensionTaxAmount>
+            <UnitPrice>100.00</UnitPrice>
+            <UnitPriceTaxInclusive>100.00</UnitPriceTaxInclusive>
+            <ClassifiedTaxCategory>
+                <Percent>0</Percent>
+                <VATCalculationMethod>0</VATCalculationMethod>
+            </ClassifiedTaxCategory>
+            <Item>
+                <Description>Example line item</Description>
+            </Item>
+        </InvoiceLine>
+    </InvoiceLines>
+    <TaxTotal>
+        <TaxSubTotal>
+            <TaxableAmount>100.00</TaxableAmount>
+            <TaxAmount>0.00</TaxAmount>
+            <TaxInclusiveAmount>100.00</TaxInclusiveAmount>
+            <AlreadyClaimedTaxableAmount>0.00</AlreadyClaimedTaxableAmount>
+            <AlreadyClaimedTaxAmount>0.00</AlreadyClaimedTaxAmount>
+            <AlreadyClaimedTaxInclusiveAmount>0.00</AlreadyClaimedTaxInclusiveAmount>
+            <DifferenceTaxableAmount>100.00</DifferenceTaxableAmount>
+            <DifferenceTaxAmount>0.00</DifferenceTaxAmount>
+            <DifferenceTaxInclusiveAmount>100.00</DifferenceTaxInclusiveAmount>
+            <TaxCategory>
+                <Percent>0</Percent>
+                <TaxScheme>VAT</TaxScheme>
+                <VATApplicable>false</VATApplicable>
+            </TaxCategory>
+        </TaxSubTotal>
+        <TaxAmount>0.00</TaxAmount>
+    </TaxTotal>
+    <LegalMonetaryTotal>
+        <TaxExclusiveAmount>100.00</TaxExclusiveAmount>
+        <TaxInclusiveAmount>100.00</TaxInclusiveAmount>
+        <AlreadyClaimedTaxExclusiveAmount>0.00</AlreadyClaimedTaxExclusiveAmount>
+        <AlreadyClaimedTaxInclusiveAmount>0.00</AlreadyClaimedTaxInclusiveAmount>
+        <DifferenceTaxExclusiveAmount>100.00</DifferenceTaxExclusiveAmount>
+        <DifferenceTaxInclusiveAmount>100.00</DifferenceTaxInclusiveAmount>
+        <PaidDepositsAmount>0.00</PaidDepositsAmount>
+        <PayableAmount>100.00</PayableAmount>
+    </LegalMonetaryTotal>
+</Invoice>
