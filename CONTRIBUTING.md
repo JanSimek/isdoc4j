@@ -15,7 +15,7 @@ Thank you for your interest in contributing to ISDOC4j! This document provides g
 1. **Fork the repository**
    ```bash
    # Fork on GitHub, then clone your fork
-   git clone https://github.com/your-username/isdoc4j.git
+   git clone https://github.com/JanSimek/isdoc4j.git
    cd isdoc4j
    ```
 

@@ -12,7 +12,7 @@
 
     <name>ISDOC4j</name>
     <description>Java library for ISDOC 6.0.2 invoice format - JAXB generated classes from official XSD</description>
-    <url>https://github.com/your-username/isdoc4j</url>
+    <url>https://github.com/JanSimek/isdoc4j</url>
     
     <licenses>
         <license>
@@ -24,23 +24,22 @@
     
     <developers>
         <developer>
-            <id>your-username</id>
-            <name>Your Name</name>
-            <email>your.email@example.com</email>
-            <organization>Organization Name</organization>
-            <organizationUrl>https://example.com</organizationUrl>
+            <id>JanSimek</id>
+            <name>Jan Šimek</name>
+            <email>jsimek.cz@gmail.com</email>
+            <url>https://github.com/JanSimek</url>
         </developer>
     </developers>
     
     <scm>
-        <connection>scm:git:git://github.com/your-username/isdoc4j.git</connection>
-        <developerConnection>scm:git:ssh://github.com:your-username/isdoc4j.git</developerConnection>
-        <url>http://github.com/your-username/isdoc4j/tree/main</url>
+        <connection>scm:git:git://github.com/JanSimek/isdoc4j.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/JanSimek/isdoc4j.git</developerConnection>
+        <url>https://github.com/JanSimek/isdoc4j/tree/master</url>
     </scm>
     
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/your-username/isdoc4j/issues</url>
+        <url>https://github.com/JanSimek/isdoc4j/issues</url>
     </issueManagement>
     
     <distributionManagement>

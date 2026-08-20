@@ -72,74 +72,88 @@ cz.isdoc.schema.invoice.v602/
 
 ## 💻 Usage Examples
 
+The `cz.isdoc.api` package is the intended entry point. `IsdocProcessor` composes
+marshalling, schema validation and `.isdocx` packaging, so most callers never touch
+JAXB directly.
+
 ### Basic Invoice Creation
 
+Note the element names: the root `Invoice` element's children are generated as
+`createInvoiceXxx`, not `createXxx`, and their types come straight from the XSD —
+`DocumentType` is a `BigInteger`, dates are `XMLGregorianCalendar`.
+
 ```java
-import cz.isdoc.schema.invoice.v602.*;
-import jakarta.xml.bind.*;
+import cz.isdoc.api.IsdocProcessor;
+import cz.isdoc.schema.invoice.v602.Invoice;
+import cz.isdoc.schema.invoice.v602.ObjectFactory;
 
-// Create invoice
+import javax.xml.datatype.DatatypeConstants;
+import javax.xml.datatype.DatatypeFactory;
+import java.math.BigInteger;
+
+ObjectFactory factory = new ObjectFactory();
+
 Invoice invoice = new Invoice();
-invoice.setVersion("6.0.2");
+invoice.setVersion("6.0.2");   // required by the schema
 
-// Add basic information
-JAXBElement<String> documentType = objectFactory.createDocumentType("1");
-JAXBElement<String> id = objectFactory.createID("INV-2024-001");
-invoice.getContent().add(documentType);
-invoice.getContent().add(id);
+// Children go into getContent() in the order the XSD declares them.
+invoice.getContent().add(factory.createInvoiceDocumentType(BigInteger.ONE));
+invoice.getContent().add(factory.createInvoiceID("INV-2026-001"));
+invoice.getContent().add(factory.createInvoiceUUID("00000000-0000-4000-8000-000000000001"));
+invoice.getContent().add(factory.createInvoiceIssueDate(
+        DatatypeFactory.newInstance().newXMLGregorianCalendarDate(
+                2026, 1, 31, DatatypeConstants.FIELD_UNDEFINED)));
+// ... remaining required elements: VATApplicable, LocalCurrencyCode, CurrRate,
+// RefCurrRate, both parties, InvoiceLines, TaxTotal, LegalMonetaryTotal
 
-// Marshal to XML
-JAXBContext context = JAXBContext.newInstance(Invoice.class);
-Marshaller marshaller = context.createMarshaller();
-marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-marshaller.marshal(invoice, System.out);
+IsdocProcessor processor = new IsdocProcessor();
+
+// Marshal and validate against the bundled XSD in one step; throws IsdocException
+// if the document is not schema-valid.
+byte[] xml = processor.marshalAndValidate(invoice);
 ```
 
-### Reading ISDOC File
+### Writing and Reading `.isdocx`
 
 ```java
-// Unmarshal from XML
-JAXBContext context = JAXBContext.newInstance(Invoice.class);
-Unmarshaller unmarshaller = context.createUnmarshaller();
+IsdocProcessor processor = new IsdocProcessor();
 
-// From file
-Invoice invoice = (Invoice) unmarshaller.unmarshal(new File("invoice.xml"));
+// Write a complete archive: manifest.xml plus invoice.isdoc
+try (OutputStream out = Files.newOutputStream(Path.of("invoice.isdocx"))) {
+    processor.write(invoice, out);
+}
 
-// From ISDOCX archive (ZIP format)
-try (ZipInputStream zis = new ZipInputStream(new FileInputStream("invoice-2024-001.isdocx"))) {
-    ZipEntry entry;
-    while ((entry = zis.getNextEntry()) != null) {
-        if (entry.getName().endsWith(".isdoc")) {
-            Invoice invoice = (Invoice) unmarshaller.unmarshal(zis);
-            break;
-        }
-    }
+// Read one back
+try (InputStream in = Files.newInputStream(Path.of("invoice.isdocx"))) {
+    Invoice parsed = processor.read(in);
 }
 ```
 
 ### Working with Invoice Content
 
-ISDOC uses a content list approach for flexibility:
+`Invoice` exposes its children as an untyped `List<Object>` of `JAXBElement`s rather
+than named getters, because the schema's content model is not expressible as distinct
+properties. There is no `setID()`; you add and search the list yourself, and ordering
+is your responsibility — schema validation is what catches a mistake.
 
 ```java
-Invoice invoice = new Invoice();
-
-// Access content list
 List<Object> content = invoice.getContent();
 
-// Add elements using ObjectFactory
-ObjectFactory factory = new ObjectFactory();
-content.add(factory.createDocumentType("1"));
-content.add(factory.createID("INV-001"));
-content.add(factory.createIssueDate(LocalDate.now()));
-
-// Find specific elements
 Optional<String> invoiceId = content.stream()
     .filter(JAXBElement.class::isInstance)
-    .map(JAXBElement.class::cast)
+    .map(el -> (JAXBElement<?>) el)
     .filter(el -> "ID".equals(el.getName().getLocalPart()))
     .map(el -> (String) el.getValue())
     .findFirst();
+```
+
+### Validating an existing document
+
+```java
+IsdocValidationResult result = new IsdocProcessor().validate(xmlBytes);
+if (!result.isValid()) {
+    result.getErrors().forEach(System.err::println);
+}
 ```
 
 ## 🛠️ Building from Source
@@ -153,7 +167,7 @@ Optional<String> invoiceId = content.stream()
 
 ```bash
 # Clone repository
-git clone https://github.com/your-username/isdoc4j.git
+git clone https://github.com/JanSimek/isdoc4j.git
 cd isdoc4j
 
 # Generate classes and build
@@ -224,60 +238,60 @@ Code generation is configured in `pom.xml`:
 
 ### Spring Boot Integration
 
+`IsdocProcessor` is thread-safe and builds its `JAXBContext` once, so register a
+single instance as a bean rather than constructing one per request.
+
 ```java
+@Configuration
+public class IsdocConfig {
+
+    @Bean
+    public IsdocProcessor isdocProcessor() {
+        return new IsdocProcessor();
+    }
+}
+
 @Service
-public class IsdocService {
-    
-    private final JAXBContext jaxbContext;
-    
-    public IsdocService() throws JAXBException {
-        this.jaxbContext = JAXBContext.newInstance(Invoice.class);
+public class InvoiceExportService {
+
+    private final IsdocProcessor processor;
+
+    public InvoiceExportService(IsdocProcessor processor) {
+        this.processor = processor;
     }
-    
-    public Invoice parseIsdoc(InputStream inputStream) throws JAXBException {
-        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-        return (Invoice) unmarshaller.unmarshal(inputStream);
+
+    /** Raw ISDOC XML, e.g. to embed as a PDF attachment. */
+    public byte[] toIsdocXml(Invoice invoice) {
+        return processor.marshalAndValidate(invoice);
     }
-    
-    public void writeIsdoc(Invoice invoice, OutputStream outputStream) throws JAXBException {
-        Marshaller marshaller = jaxbContext.createMarshaller();
-        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-        marshaller.marshal(invoice, outputStream);
+
+    /** A complete .isdocx archive. */
+    public void writeArchive(Invoice invoice, OutputStream out) {
+        processor.write(invoice, out);
+    }
+
+    public Invoice read(InputStream isdocx) {
+        return processor.read(isdocx);
     }
 }
 ```
 
-### Creating Complete ISDOC File
+### Creating a Complete `.isdocx` File
+
+Building the ZIP and manifest by hand is unnecessary — `IsdocPackager` does it, and
+`IsdocProcessor.write` validates before packaging:
 
 ```java
-public void createIsdocFile(Invoice invoice, Path outputPath) throws IOException, JAXBException {
-    // Create ZIP with manifest and invoice XML
-    try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(outputPath))) {
-        
-        // Add ISDOC manifest (root level, not META-INF)
-        zos.putNextEntry(new ZipEntry("manifest.xml"));
-        String manifest = createManifest("invoice-2024-001.isdoc");
-        zos.write(manifest.getBytes(StandardCharsets.UTF_8));
-        zos.closeEntry();
-        
-        // Add main ISDOC document
-        zos.putNextEntry(new ZipEntry("invoice-2024-001.isdoc"));
-        JAXBContext context = JAXBContext.newInstance(Invoice.class);
-        Marshaller marshaller = context.createMarshaller();
-        marshaller.marshal(invoice, zos);
-        zos.closeEntry();
+public void createIsdocFile(Invoice invoice, Path outputPath) throws IOException {
+    try (OutputStream out = Files.newOutputStream(outputPath)) {
+        processor.write(invoice, out);
     }
 }
-
-private String createManifest(String filename) {
-    return """
-        <?xml version="1.0" encoding="UTF-8"?>
-        <manifest xmlns="http://isdoc.cz/namespace/2013/manifest">
-            <maindocument filename="%s"/>
-        </manifest>
-        """.formatted(filename);
-}
 ```
+
+The resulting archive holds `manifest.xml` followed by `invoice.isdoc`, with the
+manifest in the `http://isdoc.cz/namespace/2013/manifest` namespace naming the
+payload — the layout the ISDOC 6.0.2 specification requires.
 
 ## 🐛 Known Issues & Workarounds
 
@@ -318,7 +332,7 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 6. Submit a pull request
 
 ### Reporting Issues
-- Use [GitHub Issues](https://github.com/your-username/isdoc4j/issues)
+- Use [GitHub Issues](https://github.com/JanSimek/isdoc4j/issues)
 - Include Java version, Maven version, and full error messages
 - Provide minimal reproduction case when possible
 
@@ -337,4 +351,4 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 **Made with ❤️ for the Czech business community** 🇨🇿
 
-For questions, issues, or contributions, please visit our [GitHub repository](https://github.com/your-username/isdoc4j).
+For questions, issues, or contributions, please visit our [GitHub repository](https://github.com/JanSimek/isdoc4j).
